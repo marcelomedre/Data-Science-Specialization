@@ -1,0 +1,94 @@
+# Quiz 3 - Statistical inference
+
+1. In a population of interest, a sample of 9 men yielded a sample average brain volume of 1,100cc and a standard deviation of 30cc. What is a 95% Student's T confidence interval for the mean brain volume in this new population?
+
+```{r 1}
+n <- 9
+mu <- 1100
+sd <- 30
+quantile <- 0.975
+
+confInt <- mu + c(-1,1) * qt(quantile, df = n-1) * sd/sqrt(n)
+confInt
+```
+
+2. A diet pill is given to 9 subjects over six weeks. The average difference in weight (follow up - baseline) is -2 pounds. What would the standard deviation of the difference in weight have to be for the upper endpoint of the 95% T confidence interval to touch 0?
+
+```{r 2}
+n <- 9
+dif <- -2.0
+quantile <- 0.975
+up = 0
+
+sd <- (up - dif * sqrt(n))/qt(quantile, df = n - 1)
+sd
+```
+
+3. 
+In an effort to improve running performance, 5 runners were either given a protein supplement or placebo. Then, after a suitable washout period, they were given the opposite treatment. Their mile times were recorded under both the treatment and placebo, yielding 10 measurements with 2 per subject. The researchers intend to use a T test and interval to investigate the treatment. Should they use a paired or independent group T test and interval?
+
+4. 
+In a study of emergency room waiting times, investigators consider a new and the standard triage systems. To test the systems, administrators selected 20 nights and randomly assigned the new triage system to be used on 10 nights and the standard system on the remaining 10 nights. They calculated the nightly median waiting time (MWT) to see a physician. The average MWT for the new system was 3 hours with a variance of 0.60 while the average MWT for the old system was 5 hours with a variance of 0.68. Consider the 95% confidence interval estimate for the differences of the mean MWT associated with the new system. Assume a constant variance. What is the interval? Subtract in this order (New System - Old System).
+
+
+```{r 4}
+n_n <- 10
+n_o <- 10
+var_n <- 0.6
+var_o <- 0.68
+mu_n <- 3
+mu_o <- 5
+quantile <- 0.975
+
+sig_p <- sqrt(((n_o - 1) * var_o + (n_n -1) * var_n)/(n_n + n_o -2))
+sig_p
+
+confInt <- mu_n - mu_o + c(-1, 1) *qt(quantile, df = n_n+n_o - 2) * sig_p * (1/n_o + 1/n_n)^0.5
+round(confInt, 2)
+```
+
+5. 
+Suppose that you create a 95% T confidence interval. You then create a 90% interval using the same data. What can be said about the 90% interval with respect to the 95% interval?
+
+6. 
+To further test the hospital triage system, administrators selected 200 nights and randomly assigned a new triage system to be used on 100 nights and a standard system on the remaining 100 nights. They calculated the nightly median waiting time (MWT) to see a physician. The average MWT for the new system was 4 hours with a standard deviation of 0.5 hours while the average MWT for the old system was 6 hours with a standard deviation of 2 hours. Consider the hypothesis of a decrease in the mean MWT associated with the new treatment.
+
+What does the 95% independent group confidence interval with unequal variances suggest vis a vis this hypothesis? (Because there's so many observations per group, just use the Z quantile instead of the T.)
+
+```{r 6}
+n_n <- 100
+n_o <- 100
+var_n <- 0.5
+var_o <- 2
+mu_n <- 4
+mu_o <- 6
+quantile <- 0.975
+
+sig_p <- sqrt(((n_o - 1) * var_o^2 + (n_n -1) * var_n^2)/(n_n + n_o -2))
+sig_p
+
+confInt <- mu_o - mu_n + c(-1, 1) *qnorm(quantile) * sig_p * (1/n_o + 1/n_n)^0.5
+round(confInt, 2)
+```
+
+7. 
+Suppose that 18 obese subjects were randomized, 9 each, to a new diet pill and a placebo. Subjects' body mass indices (BMIs) were measured at a baseline and again after having received the treatment or placebo for four weeks. The average difference from follow-up to the baseline (followup - baseline) was ???3 kg/m2 for the treated group and 1 kg/m2 for the placebo group. The corresponding standard deviations of the differences was 1.5 kg/m2 for the treatment group and 1.8 kg/m2 for the placebo group. Does the change in BMI over the four week period appear to differ between the treated and placebo groups? Assuming normality of the underlying data and a common population variance, calculate the relevant 90% t confidence interval. Subtract in the order of (Treated - Placebo) with the smaller (more negative) number first.
+
+```{r 7}
+quantile <- 0.95
+
+n_y <- 9 
+n_x <- 9 
+??_y <- 1.5
+??_x <- 1.8
+??_y <- -3
+??_x <- 1
+
+??_p <- sqrt(((n_x - 1) * ??_x^2 + (n_y - 1) * ??_y^2)/(n_x + n_y - 2))
+
+confidenceInterval <-  ??_y - ??_x + c(-1, 1) * qt(quantile, df=n_y+n_x-2) * ??_p * (1 / n_x + 1 / n_y)^.5
+round(confidenceInterval,3)
+
+```
+
+

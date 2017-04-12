@@ -1,0 +1,84 @@
+---
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+# Statistical Inference Project
+Marcelo Nobrega
+
+The project consists of two parts:
+
+2. Basic inferential data analysis.
+
+# Part 2: Basic Inferential Data Analysis Instructions
+
+## 1. Provide a basic summary of the data.
+
+We're going to analyze the ToothGrowth data in the R datasets package.
+
+Loading libraries, the ToothGrowth data and performing some basic exploratory data analyses.
+```{r}
+library(ggplot2)
+data("ToothGrowth")
+# Some basic exploratory data analyses
+summary(ToothGrowth)
+head(ToothGrowth)
+tail(ToothGrowth)
+str(ToothGrowth)
+```
+The ToothGrowth data consists in the length of odontoblasts (cells responsible for tooth growth)
+in 60 guinea pigs. Each animal received one of three dose levels of vitamin C (0.5, 1, and 2 mg/day) 
+by one of two delivery methods, (orange juice or ascorbic acid (a form of vitamin C and coded as VC).
+
+60 observations and 3 variables. 
+len: Tooth length
+Supp: Supplement type (VC or OJ)
+dose: Dose in miligrams/day
+
+```{r}
+ToothGrowth$dose <- as.factor(ToothGrowth$dose)
+ggplot(ToothGrowth, aes(x = dose, y = len))+
+  geom_boxplot(aes(fill = dose))+
+  facet_grid(~ supp)+
+  xlab("Dose (mg / day)")+
+  ylab("Tooth length")+
+  ggtitle("Tooth Length per Dose by Delivery Method")
+
+```
+
+The larger is the dosage for both delivery methods longre is th tooth.
+
+## 2. Use confidence intervals and/or hypothesis tests to compare tooth growth by supp and dose. (Only use the techniques from class, even if there's other approaches worth considering)
+
+```{r}
+unique(ToothGrowth$dose)
+```
+
+There are 3 levels which can be understood as 3 doseage groups, 0.1, 1.0 and 2.0 mg / day. I will compare the tooth growth by each doseage group and delivery method.
+
+Comparing tooth groth by Delivery method using t-test.
+```{r}
+t.test(len ~ supp, data = ToothGrowth[ToothGrowth$dose == 0.5,])
+```
+
+```{r}
+t.test(len ~ supp, data = ToothGrowth[ToothGrowth$dose == 1,])
+```
+
+```{r}
+t.test(len ~ supp, data = ToothGrowth[ToothGrowth$dose == 2,])
+```
+
+## 3. State your conclusions and the assumptions needed for your conclusions.
+It was assumed that the sample data was paired.
+
+Conclusions: 
+Dosage equal to 0.5 mg/day: OJ had higher mean tooth length than VC, 13.23 vs. 7.98. P-value is 0.006 (< 0.05), so for the same dosage the different delivery methods have effect on the tooth length.
+
+Dosage equal to 1.0 mg/day: OJ had higher mean tooth length than VC, 22.70 vs. 16.77. P-value is 0.001 (< 0.05). The different delivery methods have effect on the tooth length.
+
+Dosage equal to 2.0 mg/day: Both delivery methods, OJ and VC, had similar average tooth length, 26.06 vs. 26.14. P-value is 0.963 (> 0.05), and the confidence interval conains zero, so the null hypothesis can't be rejected and the different delivery methods have no effect on the tooth length.
+
+
+
