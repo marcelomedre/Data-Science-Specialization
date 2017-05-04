@@ -6,5 +6,6 @@
 ** EDA - Exploratory Data Analysis <br>
 ** Reproducible Research <br>
 ** Statistical Inference <br>
+** Regression Models <br>
 
-Updated Mar 24th 2017 - Marcelo
+Updated Apr 17th 2017 - Marcelo
