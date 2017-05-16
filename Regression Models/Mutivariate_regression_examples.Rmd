@@ -1,0 +1,84 @@
+## Multivariate regression examples
+
+Standardized fertility measure and socio-economic indicators for each of 47 French-speaking provinces of Switzerland at about 1888.
+
+A data frame with 47 observations on 6 variables, each of which is in percent, i.e., in [0, 100].
+
+[,1] Fertility a common standardized fertility measure
+[,2] Agriculture % of males involved in agriculture as occupation
+[,3]	Examination % draftees receiving highest mark on army examination
+[,4]	Education % education beyond primary school for draftees
+[,5]	Catholic % catholic (as opposed to protestant)
+[,6]	Infant.Mortality live births who live less than 1 year
+All variables but Fertility give proportions of the population.
+
+```{r, echo = FALSE}
+require(datasets)
+data(swiss)
+?swiss
+```
+
+We're interested in looking into what explains fertility in this province. So, before we go any further, let's do some basic scatter plots of the data. 
+
+```{r, echo = FALSE}
+require(GGally); require(ggplot2)
+g = ggpairs(swiss, lower = list(continuous = wrap("smooth", method = "lm")))
+g
+
+```
+
+In the next subsequent slides, investigate the relationship where agriculture, the percent of the province that works in the agricultural industry, with fertility. 
+
+```{r, echo = FALSE}
+summary(lm(Fertility ~ . , data = swiss))
+summary(lm(Fertility ~ . , data = swiss))$coefficients
+```
+
+## Example interpretation
+
+Agriculture is expressed in percentages (0 - 100)
+Estimate is -0.1721.
+Our models estimates an expected 0.17 decrease in standardized fertility for every 1% increase in percentage of males involved in agriculture in holding the remaining variables constant.
+The t-test for $H_0: \beta_{Agri} = 0$ versus $H_a: \beta_{Agri} \neq 0$ is significant.
+Interestingly, the unadjusted estimate is
+
+```{r, echo = FALSE}
+summary(lm(Fertility ~ Agriculture, data = swiss))
+summary(lm(Fertility ~ Agriculture, data = swiss))$coefficients
+```
+
+## How can adjustment reverse the sign of an effect? Let's try a simulation.
+
+```{r, echo = FALSE}
+n <- 100; x2 <- 1 : n; x1 <- .01 * x2 + runif(n, -.1, .1); y = -x1 + x2 + rnorm(n, sd = .01)
+summary(lm(y ~ x1))$coef
+summary(lm(y ~ x1 + x2))$coef
+dat = data.frame(y = y, x1 = x1, x2 = x2, ey = resid(lm(y ~ x2)), ex1 = resid(lm(x1 ~ x2)))
+
+library(ggplot2)
+g = ggplot(dat, aes(y = y, x = x1, colour = x2))
+g = g + geom_point(colour="grey50", size = 5) + geom_smooth(method = lm, se = FALSE, colour = "black") 
+g = g + geom_point(size = 4) 
+g
+# residual plot
+g2 = ggplot(dat, aes(y = ey, x = ex1, colour = x2))  
+g2 = g2 + geom_point(colour="grey50", size = 5) + geom_smooth(method = lm, se = FALSE, colour = "black") + geom_point(size = 4) 
+g2
+# you can see that the x2 variable is clearly not related to the residual x1 variable. 
+```
+
+## Back to this data set
+
+Agriculture effect the sign reverses itself with the inclusion of Examination and Education.
+The percent of males in the province working in agriculture is negatively related to educational attainment (correlation of r cor(swiss$Agriculture, swiss$Education)) and Education and Examination (correlation of r cor(swiss$Education, swiss$Examination)) are obviously measuring similar things.
+Is the positive marginal an artifact for not having accounted for, say, Education level? (Education does have a stronger effect, by the way.)
+At the minimum, anyone claiming that provinces that are more agricultural have higher fertility rates would immediately be open to criticism.
+
+## What if we include an unnecessary variable?
+
+z adds no new linear information, since it's a linear combination of variables already included. R just drops terms that are linear combinations of other terms.
+
+```{r}
+z <- swiss$Agriculture + swiss$Education
+lm(Fertility ~ . + z, data = swiss)
+```
