@@ -1,0 +1,63 @@
+# Logistic regression
+
+Binary GLMs come from trying to model outcomes that can take only two values. Some examples include: survival or not at the end of a study, winning versus losing of a team and success versus failure of a treatment or product. Often these outcomes are called Bernoulli outcomes, from the Bernoulli distribution named after the famous probabilist and mathematician.
+
+If we happen to have several exchangeable binary outcomes for the same level of covariate values, then that is binomial data and we can aggregate the 0's and 1's into the count of 1's. As an example, imagine if we sprayed insect pests with 4 different pesticides and counted whether they died or not. Then for each spray, we could summarize the data with the count of dead and total number that were sprayed and treat the data as binomial rather than Bernoulli.
+
+## Key ideas
+
+Frequently we care about outcomes that have two values  
+Alive/dead  
+Win/loss  
+Success/Failure  
+etc  
+Called binary, Bernoulli or 0/1 outcomes  
+Collection of exchangeable binary outcomes for the same covariate data are called binomial outcomes.
+
+## Example Baltimore Ravens win/loss
+
+Ravens Data
+```{r}
+rm(list = ls())
+download.file("https://dl.dropboxusercontent.com/u/7710864/data/ravensData.rda"
+              , destfile="./data/ravensData.rda",method="curl")
+load("./data/ravensData.rda")
+head(ravensData)
+```
+
+## Linear regression
+
+$$ RW_i = b_0 + b_1 RS_i + e_i $$
+
+$RW_i$ - 1 if a Ravens win, 0 if not
+
+$RS_i$ - Number of points Ravens scored
+
+$b_0$ - probability of a Ravens win if they score 0 points
+
+$b_1$ - increase in probability of a Ravens win for each additional point
+
+$e_i$ - residual variation due
+
+## Linear regression in R
+
+```{r}
+lmRavens <- lm(ravensData$ravenWinNum ~ ravensData$ravenScore)
+summary(lmRavens)$coef
+```
+
+## Odds
+
+Binary Outcome 0/1
+
+$$RW_i$$
+
+Probability (0,1)
+
+$$\rm{Pr}(RW_i | RS_i, b_0, b_1 )$$
+
+Odds $(0,\infty)$ $$\frac{\rm{Pr}(RW_i | RS_i, b_0, b_1 )}{1-\rm{Pr}(RW_i | RS_i, b_0, b_1)}$$
+
+Log odds $(-\infty,\infty)$
+
+$$\log\left(\frac{\rm{Pr}(RW_i | RS_i, b_0, b_1 )}{1-\rm{Pr}(RW_i | RS_i, b_0, b_1)}\right)$$

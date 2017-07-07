@@ -1,0 +1,135 @@
+#Prediction study design
+
+1. Define error rate
+2. Slipt data into:
+  - training, testing, validation (optional)
+3. Training set pick features
+  - cross-validation
+4. Training set pick prediciton function
+  - cross-validation
+5. If no validation set
+  - apply 1 x test set - best model
+6. If validation
+  - apply to test set and refine
+  - apply 1 x to validation
+  
+## Know the benchmarks
+
+Good idea to know the benchmarks of the model/prediction algorithm.
+
+## Avoid small sample sizes
+
+## Rules of thumb
+1. If large sample size  
+  - 60 % training  
+  - 20 % test  
+  - 20 % validation  
+  
+2. Medium sample size  
+  - 60 % training   
+  - 40 % test  
+
+3. Small sample size  
+  - Do cross validation  
+  - Report caveat of small sample size  
+
+# Types of Errors
+
+True Positive and False Negative  
+True Negative and False Negative  
+
+Sensitivity and Specificity Table 
+
+TP   FP
+
+FN   TN
+  
+Sensitivity - Pr(+ test | +) = TP/(TP+FN)  
+Specificity - Pr(- test | -) = TN/(FP+TN)   
+Positive Predicitive Value - Pr(+ | + test) = TP/(TP+FP)    
+Negative Predicitive Value - Pr(- | - test) = TN/(FN+TN)    
+Accuracy - Pr(correct outcome) = (TP+TN)/ (TP+FP+FN+TN)
+
+## Desease - General Population Risk
+
+99  999
+
+1   98901
+
+Sensitivity = 99 / (99 + 1) = 99 %  
+Specificity = 98901 / (999 + 98901) = 99 %     
+Positive Predicitive Value = 99 / (99 + 999) = 9 %    
+Negative Predicitive Value = 98901 / (1 + 98901) > 99.9 %      
+Accuracy = (99 + 98901) / (100000) = 99 %  
+
+
+## For Continuous data
+
+Mean squared error (MSE) = 1 / n sum(predicted - real x)^2
+
+Root mean squared error (MSE) = (1 / n sum(predicted - real x)^2)^(1/2)
+
+
+# ROC curves
+Receiver OperatingCharacteristic curves
+
+## Why a Curve?  
+  -  in binary classification  
+    - Alive/Dead  
+    - Click on ad/Don't click  
+  - Predictions are often quantitative   
+    - Prob of being alive  
+    - Predic on a scale from 1 to 10  
+  - The cutt off you choose give different results  
+  
+(x) axis P (False Positive = 1 - Specificity) and (y) axis P (True Positive or Sensitivity) - define wheater the algorithm is good or not.  
+
+AUC = 0.5 random guessing  
+AUC = 1.0 perfect classifier 
+AUC > 0.8 in general is considered "good"  
+
+# Cross Validation
+
+## Approach  
+1. Use the trainin set  
+2. Split into training/test sets  
+3. Build a model on the training set  
+4. Evaluate on the test set  
+5. Repeat and average the estimated errors.
+
+## Used for  
+
+1. Picking variables to include in a model  
+2. Picking the type opf prediction function to use  
+3. Pckin the parameters in the prediction function  
+4. Comparing different predictors  
+
+
+-- Random subsampling  
+-- K- fold cross validation (break data into K equal sizes data sets)  
+-- Leave one out cross validation 
+
+## Considerations
+
+1. For time series data must be used in chuncks  
+2. For K-fold
+  - larger k = less bias, more variance  
+  - smaller k = more bias, less variance  
+3. Random Sampling must be done without replacement  
+4. Random Sampling with replacement is the bootstrap  
+  - underestimates the error  
+  - can be corrected, but it is complicated  
+5. If cross validate to pick predictors estimate errors on independent data.
+  
+# What data should I use?
+
+If you want to predict X, use data related to X.  
+To predict player performance use data about player performance. (Moneyball)
+
+The closer that you can be to the actual data about the process that you care about, the more often than not that you, the better your predictions will be.
+
+## Data Properties matter
+## Unrelated data is the most common mistake
+
+
+  

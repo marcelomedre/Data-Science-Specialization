@@ -1,0 +1,83 @@
+# Preprocessing with Principal Component Analysis (PCA)
+
+The idea is that often you have multiple quantitative variables and sometimes they'll be highly correlated with each other. In other words, they'll be very similar to being the almost the exact same variable. In this case, it's not necessarily useful to include every variable in the model. You might want to include some summary that captures most of the information in those quantitative variables
+
+```{r}
+library(caret)
+library(kernlab)
+data("spam")
+inTrain <- createDataPartition(y = spam$type, p = 0.75, list = FALSE)
+training <- spam[inTrain,]
+testing <- spam[-inTrain,]
+
+M <- abs(cor(training[,-58])) # 58 = outcome
+diag(M) <- 0
+which(M > 0.8, arr.ind = T)
+
+names(spam)[c(34,32)]
+plot(spam[,34], spam[,32])
+```
+
+So the idea is, including both of these predictors in the model might not necessarily be very useful. And so, the basic idea is, how can we take those variables and turn them into, say, a single variable that might be better? 
+
+## Basic PCA idea
+
+  - We might not need every predictor  
+  - A weighted combination of predictors might be better  
+  - We should pick this combination to capture the "most information" possible  
+  - Benefits  
+    - Reduced number of predictors  
+    - Reduced noise (due to averaging)
+
+Looking for the variability    
+```{r}
+X <- 0.71*training$num415 + 0.71*training$num857
+Y <- 0.71*training$num415 - 0.71*training$num857
+plot(X,Y)
+```
+
+Most of the variability is happening in the X axis.
+Lots of points all spread out across the x-axis, but most of the points are clustered right here at 0 on the y-axis. So that almost all of these points have a y value of 0. So, the adding the two variables together captures most of the information in those two variables and subtracting the variables takes less information. So the idea here is we might want to use the sum of the two variables as a predictor.
+
+## PCA/SVD
+
+Example  
+```{r}
+smallSpam <- spam[,c(34,32)]
+prComp <- prcomp(smallSpam)
+plot(prComp$x[,1], prComp$x[,2])
+prComp$rotation
+```
+
+## PCA on SPAM data
+```{r}
+typeColor <- ((spam$type == "spam")*1 + 1)
+prComp <- prcomp(log10(spam[,-58]+1))
+plot(prComp$x[,1], prComp$x[,2], col = typeColor, xlab = "PC1", ylab = "PC2")
+```
+
+## PCA with caret
+```{r}
+prePRoc <- preProcess(log10(spam[,-58]+1),method ="pca",pcaComp = 2)
+spamPC <- predict(prePRoc, log10(spam[,-58]+1))
+plot(spamPC[,1], spamPC[,2], col = typeColor)
+```
+
+## Preprocessing with PCA
+
+In the test data set you have to use the same principal component that you calculated in the trained video set for the test variables. So the idea here is we again pass at the pre-process object that we calculated in the training set. But now we pass at the new testing data. So this predict function is going to take the principle components we calculated from training. And get the new values for the test data set on those same principle components. 
+```{r}
+prePRoc <- preProcess(log10(spam[,-58]+1),method ="pca",pcaComp = 2)
+trainPC <- predict(prePRoc, log10(training[,-58]+1))
+modelFit <- train(training$type ~., method = "glm", data = trainPC)
+
+testPC <- predict(prePRoc, log10(testing[,-58]+1))
+confusionMatrix(testing$type, predict(modelFit, testPC))
+```
+
+```{r}
+modelFit <- train(training$type ~., method = "glm",
+                  preProcess = "pca",
+                  data = training)
+confusionMatrix(testing$type, predict(modelFit, testing))
+```

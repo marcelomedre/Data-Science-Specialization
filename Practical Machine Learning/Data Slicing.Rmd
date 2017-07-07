@@ -1,0 +1,126 @@
+# Data slicing
+
+```{r, echo = FALSE}
+library(caret)
+library(kernlab)
+data(spam)
+inTrain <- createDataPartition(y = spam$type, p = 0.75, list = FALSE)
+training <- spam[inTrain,]
+testing <- spam[-inTrain,]
+dim(training)
+```
+## Cross validation
+```{r}
+set.seed(32323)
+folds <- createFolds(y = spam$type, k = 10, list = TRUE, returnTrain = TRUE)
+# list=TRUE, which means it will return each set of imbecies corresponding to a particular fold as a set of as a list. 
+sapply(folds, length)
+folds[[1]][1:10]
+```
+
+```{r}
+set.seed(32323)
+folds <- createFolds(y = spam$type, k = 10, list = TRUE, returnTrain = FALSE)
+# list=TRUE, which means it will return each set of imbecies corresponding to a particular fold as a set of as a list. 
+# Returns only the test samples
+sapply(folds, length)
+folds[[1]][1:10]
+```
+
+## Resampling
+
+```{r}
+set.seed(32323)
+folds <-  createResample(y = spam$type, times = 10, list = TRUE)
+sapply(folds, length)
+```
+
+## Time Slices
+
+```{r}
+set.seed(32323)
+tme <- 1:1000
+folds <-  createTimeSlices(y = tme, initialWindow = 20, horizon = 10)
+names(folds)
+```
+
+# Training options
+
+```{r}
+library(caret)
+library(kernlab)
+data(spam)
+inTrain <- createDataPartition(y = spam$type, p = 0.75, list = FALSE)
+training <- spam[inTrain,]
+testing <- spam[-inTrain,]
+modelFit <- train(type ~., data = training, method = "glm")
+```
+
+```{r}
+args(traindefault)
+function (x, y, method = "rf", preProcess = NULL, ..., weights = NULL, 
+    metric = ifelse(is.factor(y), "Accuracy", "RMSE"), maximize = ifelse(metric == 
+        "RMSE", FALSE, TRUE), trControl = trainControl(), tuneGrid = NULL, 
+    tuneLength = 3) 
+NULL
+```
+
+## Metric Options
+
+Continuos outcomes
+  - RMSE  
+  - RSquared  
+Categorical outcomes  
+  - Accuracy = Fraction correct  
+  - kappa = a measure of concordance  
+  
+## trainControl
+
+```{r}
+args(trainControl)
+function (method = "boot", number = ifelse(method %in% c("cv", 
+    "repeatedcv"), 10, 25), repeats = ifelse(method %in% c("cv", 
+    "repeatedcv"), 1, number), p = 0.75, initialWindow = NULL, 
+    horizon = 1, fixedWindow = TRUE, verboseIter = FALSE, returnData = TRUE, 
+    returnResamp = "final", savePredictions = FALSE, classProbs = FALSE, 
+    summaryFunction = defaultSummary, selectionFunction = "best", 
+    custom = NULL, preProcOptions = list(thresh = 0.95, ICAcomp = 3, 
+        k = 5), index = NULL, indexOut = NULL, timingSamps = 0, 
+    predictionBounds = rep(FALSE, 2), seeds = NA, allowParallel = TRUE) 
+NULL
+```
+
+## trainControl resampling
+
+- method  
+  - boot = bootstrapping  
+  - boot632 = bootstrapping with adjustment  
+  - cv = cross validation  
+  - repeatedcv = repeated cross validation  
+  - LOOCV = leave one out cross validation  
+- number  
+  - For boot/cross validation  
+  - Number of subsamples to take  
+- repeats  
+  - Number of times to repeate subsampling  
+  - If big this can slow things down  
+  
+## Setting the seed
+
+It is often useful to set an overall seed  
+You can also set a seed for each resample  
+Seeding each resample is useful for parallel fits  
+
+seed example
+```{r}
+set.seed(1235)
+modelFit2 <- train(type ~.,data=training, method="glm")
+modelFit2
+```
+
+seed example
+```{r}
+set.seed(1235)
+modelFit3 <- train(type ~.,data=training, method="glm")
+modelFit3
+```

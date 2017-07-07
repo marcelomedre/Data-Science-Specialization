@@ -1,0 +1,116 @@
+# Preprocessing
+
+## Why Preprocess??
+```{r}
+rm(list = ls())
+library(caret); library(kernlab)
+data(spam)
+inTrain <- createDataPartition(y = spam$type, p = 0.75, list = FALSE)
+training <- spam[inTrain,]
+testing <- spam[-inTrain,]
+hist(training$capitalAve, main = "", xlab = "ave. capital run length")
+```
+Almost all of the run links are very small, but there are a few that are much, much larger. This is an example of a variable that is very skewed, and, so it's very hard to deal with in model based predictors and so you might want to preProcess.
+
+
+```{r}
+mean(training$capitalAve)
+sd(training$capitalAve)
+```
+If you take the mean of this variable, it's about 4.7. But the standard deviation is huge, it's much much larger. So, it's much more highly variable variable. And so, what you might want to do is do some sort of preprocessing, so the machine learning algorithms don't get tricked by the fact that it's skewed and highly variable.
+
+
+## Standardizing
+
+```{r}
+trainCapAve <- training$capitalAve
+trainCapAveS <- (trainCapAve - mean(trainCapAve))/sd(trainCapAve)
+mean(trainCapAveS)
+sd(trainCapAveS)
+```
+the usual way to standardize variables, is to take the variable values, and subtract their mean. so you take the value, subtract the mean, and then divide that whole quantity by the standard deviation. When you do that the mean of the variables that you have will be zero. And the standard deviation will be one, so that will reduce a lot of that variability that we saw previously.
+
+## Standardizing - test set
+
+when we apply a prediction algorithm to the test set. We have to be aware that we can only use parameters that we estimated in the training set. In other words, when we apply this same standardization to the test set, we have to use the mean from the training set, and the standard deviation from the training set, to standardize the testing set values. What does this mean? It means that when you do the standardization, the mean will not be exactly zero in the test set.
+
+```{r}
+testCapAve <- testing$capitalAve
+testCapAveS <- (testCapAve - mean(trainCapAve))/sd(trainCapAve)
+mean(testCapAveS)
+sd(testCapAveS)
+```
+
+## Standardizing - preProcess function
+
+```{r}
+preObj <- preProcess(training[,-58], method = c("center", "scale"))
+trainCapAveS <- predict(preObj, training[,-58])$capitalAve
+mean(trainCapAveS)
+sd(trainCapAveS)
+```
+
+```{r}
+testCapAveS <- predict(preObj, testing[,-58])$capitalAve
+mean(testCapAveS)
+sd(testCapAveS)
+```
+
+## Standardizing - preProcess argument
+
+```{r}
+set.seed(32323)
+modelFit <- train(type ~., data = training,
+                  preProcess = c("center", "scale"),
+                  method = "glm")
+modelFit
+```
+
+## Standardizing - Box-Cox transforms
+
+Box cox transforms are a set of transformations that take continuous data, and try to make them look like normal data and they do that by estimating a specific set of parameters using maximum likelihood. 
+
+If you have a bunch of values that are exactly equal to zero this is a continuous transform and it doesn't take care of values that are repeated. So, it doesn't take care of a lot of the problems that would happen, would occur with using a variable that's highly skewed though. 
+
+```{r}
+preObj <- preProcess(training[,-58], method = c("BoxCox"))
+trainCapAveS <- predict(preObj, training[,-58])$capitalAve
+par(mfrow = c(1,2));hist(trainCapAveS);qqnorm(trainCapAveS)
+```
+
+## Standardizing - Inputing data
+
+if you have some missing data. You can impute them using something called k-nearest neighbor's imputation.
+
+"knnImpute" =  K-nearest neighbors computation find the k. So if k equal to ten, then the 10 nearest, data vectors that look most like data vector with the missing value, and average the values of the variable that's missing and compute them at that position. So, if we do that, then we can predict on our training set, all of the new values, including the ones that have been imputed with the k-nearest imputation algorithm. 
+
+```{r}
+set.seed(13343)
+# make some values NA
+training$capAve <- training$capitalAve
+selectNA <- rbinom(dim(training)[1], size = 1, prob = 0.05) == 1
+training$capAve[selectNA] <- NA
+
+# impute and standardize
+preObj <- preProcess(training[,-58], method = "knnImpute")
+capAve <- predict(preObj, training[,-58])$capAve
+
+# Standardize true values
+capAveTruth <- training$capitalAve
+capAveTruth <- (capAveTruth - mean(capAveTruth))/sd(capAveTruth)
+```
+One thing you can do is you can look at the comparison between the actual, in this case, when we set some of the values to be equal to NA in advance, we can look at the values that were imputed, and the values that were truly there before we removed them and made them NAs. And we can see how close those two values are to each other. And so, you can see, for example, that. Those values are relatively close to each other. Most of the differences are very close to zero. Here you can see the values are mostly very close to zero. So the imputation work relatively well.
+
+```{r}
+quantile(capAve - capAveTruth)
+```
+
+You can also do look at just the values that were imputed
+
+```{r}
+quantile((capAve - capAveTruth)[selectNA])
+```
+
+```{r}
+quantile((capAve - capAveTruth)[!selectNA])
+```

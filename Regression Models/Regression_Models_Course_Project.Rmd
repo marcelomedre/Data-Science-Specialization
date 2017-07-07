@@ -1,0 +1,113 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+# Regression Models Course Project
+## Instructions
+You work for Motor Trend, a magazine about the automobile industry. Looking at a data set of a collection of cars, they are interested in exploring the relationship between a set of variables and miles per gallon (MPG) (outcome). They are particularly interested in the following two questions:
+
+ - "Is an automatic or manual transmission better for MPG"  
+ - "Quantify the MPG difference between automatic and manual transmissions"
+ 
+### Load and check data
+```{r}
+rm(list = ls())
+cardata <- mtcars
+head(cardata)
+summary(cardata) # no NA's
+```
+
+### "Is an automatic or manual transmission better for MPG?"  
+### Plotting 
+```{r}
+library(ggplot2)
+ggplot(data = cardata, aes(y = mpg, x = factor(am), fill = factor(am)))+
+  geom_boxplot()+
+  scale_fill_discrete(name="Tranmission\nType")+
+  xlab("Transmission type 0 = auto and 1 = manual")+
+  ylab("Miles / Gallon")+
+  ggtitle("Figure 1 - is automatic or manual transmission better for MPG?")
+
+```
+
+Figure 1 indicates that manual transmission is better for MPG than automatic transmission.
+We could check if this diference is significant.
+
+### Checking the significance of the observed MPG diferences
+
+Let's consider:  
+  - Null hypothesis: the MPG of the automatic and manual transmission
+  has no difference.   
+ - Alternative hypothesis: there difference of the MPG for the automatic and manual transmissions
+ is significant.  
+
+The hypothesis can be test with a t-test
+
+```{r}
+t.res <- t.test(mpg ~ factor(am), data = cardata)
+t.res
+```
+
+p-value is smaller than 0.05, so the null hypothesis is rejected and it can be said
+that there is a significant difference between for the MPG of the automatic and manual cars. 
+The mean MPG for cars with automatic transmission is 17.15, while for cars with manual
+transmission is 24.39 miles per gallon.
+
+### "Quantify the MPG difference between automatic and manual transmissions"
+#### Regression Models
+
+```{r}
+linReg <- lm(mpg ~ factor(am), data = cardata)
+summary(linReg)
+```
+Using a linear model to quantify the MPG difference between automatic and manual transmissions
+we obtain that automatic cars have 17.15 average MPG, whereas manual ones have 7.24 MPG higher.
+Additionally, despite the low p-values, the adj-R-squared is 0.33, which corresponds to a model
+that is accounting for only ~33 % of the MPG variance, a very poor model. 
+
+### Improving the model
+
+We can try to improve the model by using all the variables.
+```{r}
+fullLinReg <- lm(mpg ~. , data = cardata)
+summary(fullLinReg)
+# plot(residuals(fullLinReg))
+```
+Using all the variables in the model we got an adj-R-Squared of 0.81, however,
+p-values are all greater than 0.05 which indicates no significance of the variables to
+the model. We must use only significant variables in the model, which can be done
+with the step function. 
+
+### Selecting significant variables
+```{r}
+stepmodel <- step(lm(mpg ~. , data = cardata), trace = 0, steps = 1000)
+summary(stepmodel)
+```
+
+With the selected significant variables (wt, qsec and am) the model accounted to the 
+explanation of ~ 83% of the MPF variance. 
+Am coef indicates that manual transmission cars have 2.9358 more mpg than automatic transmission
+cars on average when all other variables are constant.
+
+### Analysis and Diagonostics of Residuals
+
+```{r}
+# Residual plot
+par(mfrow = c(2,2))
+plot(stepmodel)
+```
+
+ - In the Residuals vs Fitted values plot no pattern can be recognized. The points are
+ scattered around zero.   
+ - Normal Q-Q plot most part of the data points fall on the normal distribution line.   
+ - Scale-Location indicates constant variance with the scattered points pattern.  
+ - Residuals vs Leverage shows that all values are in the 0.5 range indicating that
+ no outliers are present in the dataset.
+ 
+## Conclusion
+
+MPG analysis showed that manual transmission cars are better in terms of fuel consumption
+when compared to automatic cars with and average MPG of 24.39 for manual cars, 7.24 MPG
+higher than the average of automatic cars. 
+

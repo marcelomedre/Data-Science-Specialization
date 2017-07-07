@@ -1,0 +1,49 @@
+#The caret package
+
+## Caret Functionality
+
+1. Some processing tools (cleaning)  
+  - preProcess  
+2. Data splitting  
+  - createDataPartition  
+  - createREsample  
+  - createTimeSlices  
+3. Training/testing functions
+  - train  
+  - predict  
+4. Model comparison  
+  - confusionMatrix
+  
+## Machine Learning Algorithms in R
+
+1. linear discriminant analysis  
+2. Regression  
+3. Naive Bayes  
+4. Support Vector Machines  
+5. Classifications and regression trees  
+6. Random forests  
+7. Boosting  
+etc  
+
+Example
+
+```{r, echo = FALSE}
+library(caret)
+library(kernlab)
+data(spam)
+inTrain <- createDataPartition(y = spam$type, p = 0.75, list = FALSE)
+training <- spam[inTrain,]
+testing <- spam[-inTrain,]
+dim(training)
+```
+
+Fit a model
+```{r}
+set.seed(32343)
+modelFit <- train(type ~., data = training, method = "glm")
+modelFit
+modelFit$finalModel
+Predictions <- predict(modelFit, newdata = testing)
+Predictions
+confusionMatrix(Predictions, testing$type)
+```

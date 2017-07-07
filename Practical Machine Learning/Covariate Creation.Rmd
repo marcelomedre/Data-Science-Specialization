@@ -1,0 +1,72 @@
+# Covariate Creation
+
+Covariates are sometimes called predictors and sometimes called features. They're the variables that you will actually include in your model that you're going to be using to combine them to predict whatever outcome that you care about.
+
+## Two levels of covariate creation
+
+1. From raw data to covariate.  
+2. Tranforming tidy covariates.  
+
+```{r}
+library(kernlab)
+data(spam)
+spam$capitalAveSq <- spam$capitalAve^2
+```
+
+Level 1, Raw data -> covariates  
+  - Depends on application  
+  - The balancing act is summarization vs. information loss  
+  - the more knowledge of the system, the better the job you do  
+  - when in doubt, err on te side of more features  
+  - can be automated, but use caution!!!
+  
+Level 2, Tidy covariates -> new covariates
+  - MOre necessary for some methods, reg, svms, than trees  
+  - should be done only on the training set 
+  - The best approach is through exploratory analysis(plotting/tables)  
+  - New covariates should be added to data frames  
+
+Example:
+```{r}
+library(ISLR)
+library(caret)
+data(Wage)
+inTrain <- createDataPartition(y = Wage$wage, p = 0.7, list = FALSE)
+training <- Wage[inTrain,]
+testing <- Wage[-inTrain,]
+```
+
+Basic idea, convert factor variables to indicator variables
+
+```{r}
+table(training$jobclass)
+
+dummies <- dummyVars(wage ~ jobclass, data = training)
+head(predict(dummies, newdata = training))
+```
+
+Removing zero covariates - no variability in it - woulb be likely not good predictors.
+
+Nice way to throw those sort of less meaningful predictors out right away.
+
+```{r}
+nsv <- nearZeroVar(training, saveMetrics = TRUE)
+nsv
+```
+
+Spline basis
+
+```{r}
+library(splines)
+bsBasis <- bs(training$age, df = 3) #df = 3 3rd degree polynomial
+bsBasis
+
+# Fitting curves with splines
+lm1 <- lm(wage ~ bsBasis, data = training)
+plot(training$age, training$wage, pch = 19, cex = 0.5)
+points(training$age, predict(lm1, newdata = training), col = "red", pch = 19, cex = 0.5)
+
+# splines on the test set
+predict(bsBasis, age = testing$age)
+
+```

@@ -1,0 +1,191 @@
+# Practical Machine Learning
+```{r}
+rm(list = ls())
+```
+
+## Who predicts?
+
+  - Local Governments - pension payments  
+  - Google - wheather you will click on an add  
+  - Amazon - what movies/books you are interested in   
+  - Insurance Companies - what your risk of death  
+  - Johns Hopkins - who will succeed in thei programs
+  
+## Why predict? 
+
+  - Glory!
+  - Richness! =)  Competitions  
+  - For Sport!! Kaggle  
+  - To save Lives! i.e. Breast cancer  
+  - To save money!  
+
+Book - The Elements of Statistical Learning - T. Hastie, R. Tibshirani, J. Friedman   
+Package - the caret package - Classification And REgression Training  
+Machine Learning Classes - Andrew Ng - Coursera Standford  
+
+## What is Prediction?
+
+Probability/Sampling -> Training Set  
+
+Prediction Function f(y)  
+
+Decide what samples will be used as training and test sets  
+
+## Components of a predictor
+
+question -> input data -> features -> algorithm -> parameters -> evaluation  
+
+### SPAM example
+
+question - Can I automatically emails that are SPAM that are not?  
+
+Make it concrete?  
+
+Can I use features of that emails to classify them as SPAM?  
+
+i.e. input data - kernlab package
+```{r}
+library(kernlab)
+data(spam)
+head(spam)
+
+plot(density(spam$your[spam$type == "nonspam"]),
+     col = "blue", main = "", xlab = "Frequency of 'your'")
+lines(density(spam$your[spam$type == "spam"]), col = "red")
+```
+
+Most of the emails that are SPAM, those are the ones that are in red, you can see that they tend to have more appearances of the word, your. Where as all of the emails that are HAM, the ones that we actually want to receive have a much higher peak right over here down near 0, so there's very few email that have a large number of viewers that are HAM. 
+
+### Our algorithm
+
+  - Find a value of C.
+  - Frequency of 'your' > C predict "SPAM"
+  
+```{r}
+plot(density(spam$your[spam$type == "nonspam"]),
+     col = "blue", main = "", xlab = "Frequency of 'your'")
+lines(density(spam$your[spam$type == "spam"]), col = "red")
+abline(v = 0.5, col = "black")
+
+prediction <- ifelse(spam$your > 0.5, "spam", "nonspam" )
+t <- table(prediction, spam$type)/length(spam$type)
+t
+# Accuracy
+acc = t[1,1]+t[2,2]
+acc
+```
+
+
+## Relative importance of steps
+
+Question > data > features > algorithms  
+
+Quot by John Tukey, which is that the combination of some data and and aching desire for an answer does not ensure that a reasonable answer can be extracted from a given body of data.
+  
+In other words, an important component of knowing how to do prediction is to know when to give up, when the data that you have is just not sufficient to answer the question that you're trying to answer.
+
+Garbage in = Garbage out
+
+Often more data > better models  
+
+The MOST IMPORTANT STEP - colect the right data!!!!
+
+Features  
+  - Properties of good features
+    - Lead to data compression  
+    - Retain relevant info  
+    - Created based on expert application knowledge
+  
+  - Commom mistakes
+    - Try to automate feature selection  
+    - Not paying Attention to data-specific quirks - outliers, NA's
+    - Automated with care  
+    
+## The "Best" Machine Learning Method
+
+Interpretable - Simple - Accurate - Fast - Scalable
+
+## In sample and out of sample error
+
+in sample error = error rate you get on the sample data set you used to build your predictor. Resubstitution error
+  
+Out of sample error = Err rate you get on a new data set. Generalization error.  
+
+Key ideas  
+   - out of sample error is what you care about.  
+   - In sample error < out of sample error.  
+   - The reason is overfitting - Matching the algorithm to the data you have. 
+   
+Example
+```{r}
+library(kernlab)
+data(spam)
+set.seed(333)
+smallSpam <- spam[sample(dim(spam)[1],size = 10),]
+spamLabel <- (smallSpam$type == "spam")*1 + 1
+plot(smallSpam$capitalAve, col = spamLabel)
+```
+  
+Prediction rule 1
+ - capitalAve > 2.7 = "spam"    
+ - capitalAve < 2.4 = "nonspam"  
+ - capitalAve  between 2.4 and 2.45 = "spam"  
+ - capitalAve  between 2.45 and 2.7 = "nonspam"
+ 
+```{r}
+rule1 <- function(x){
+  prediction <- rep(NA, length(x))
+  prediction[x > 2.7] <- "spam"
+  prediction[x < 2.4] <- "nonspam"
+  prediction[(x >= 2.40 & x <= 2.45)] <- "spam"
+  prediction[(x >= 2.45 & x <= 2.70)] <- "nonspam"
+  return(prediction)
+}
+table(rule1(smallSpam$capitalAve), smallSpam$type)
+```
+Training acc = perfect
+
+Prediction rule 2  
+ - capitalAve > 2.7 = "spam"    
+ - capitalAve < 2.4 = "nonspam"  
+
+```{r}
+rule2 <- function(x){
+  prediction <- rep(NA, length(x))
+  prediction[x > 2.8] <- "spam"
+  prediction[x <= 2.8] <- "nonspam"
+  return(prediction)
+}
+table(rule2(smallSpam$capitalAve), smallSpam$type)
+```
+
+Training set - missed 1 value
+
+Applying to all data set
+
+```{r}
+table(rule1(spam$capitalAve), spam$type)
+table(rule2(spam$capitalAve), spam$type)
+
+mean(rule1(spam$capitalAve) == spam$type)
+mean(rule2(spam$capitalAve) == spam$type)
+
+sum(rule1(spam$capitalAve) == spam$type)
+sum(rule2(spam$capitalAve) == spam$type)
+```
+ 
+Complicated rule errors (rule1) >> Simplified rulee (rule2)  
+
+So, what's the reason that the simplified rule actually does better than the more complicated rule? And the reason why is over fitting.
+
+## What's is going on
+
+OVERFITTING
+
+- data set - two parts  
+  - signal  
+  - noise  
+- goal of the predictor = find signal and ignore noise
+- if you design a perfect predictor - get signal and noise, and the predictor won't perform as well on new samples. 
+
+
