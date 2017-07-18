@@ -1,0 +1,133 @@
+# Predicting with trees
+
+## Key ideas  
+  - Iteratively split variables into groups  
+  - Evaluate "homogeneity" within each group  
+  - Split again if necessary  
+
+### Pros
+  - Easy to interpret  
+  - Better performance in nonlinear settings  
+
+### Cons  
+  - Without pruning/cross-validation can lead to overfitting   
+  - Harder to estimate uncertainty  
+  - Results mey be variable  
+
+## Basic Algorithm 
+
+1. Start with all variables in one group  
+2. Find the variable/split that best separates the outcomes  
+3. Divide the data into two groups ("leaves") on that split ("node")  
+4. Within each split, find the best variable/split that separates the outcomes  
+5. Continue until the groups are too small or sufficiently "pure"  
+
+
+## Measures of impurity
+
+$$\hat{p}{mk} = \frac{1}{N_m}\sum{x_i; in ; Leaf ; m}\mathbb{1}(y_i = k)$$
+
+Misclassification Error: $$ 1 - \hat{p}_{m k(m)}; k(m) = {\rm most; common; k}$$
+
+0 = perfect purity
+0.5 = no purity
+Gini index: $$ \sum_{k \neq k'} \hat{p}{mk} \times \hat{p}{mk'} = \sum_{k=1}^K \hat{p}{mk}(1-\hat{p}{mk}) = 1 - \sum_{k=1}^K p_{mk}^2$$
+
+0 = perfect purity
+0.5 = no purity
+
+## Measures of impurity
+
+Deviance/information gain:
+
+$$ -\sum_{k=1}^K \hat{p}{mk} \log_2\hat{p}{mk} $$
+
+0 = perfect purity
+1 = no purity
+
+http://en.wikipedia.org/wiki/Decision_tree_learning
+
+--- &twocol w1:50% w2:50%
+
+## Measures of impurity
+
+*** =left
+```{r}
+par(mar=c(0,0,0,0)); set.seed(1234); x = rep(1:4,each=4); y = rep(1:4,4)
+plot(x,y,xaxt="n",yaxt="n",cex=3,col=c(rep("blue",15),rep("red",1)),pch=19)
+```
+
+Misclassification: $1/16 = 0.06$  
+Gini: $1 - [(1/16)^2 + (15/16)^2] = 0.12$  
+Information:$-[1/16 \times log2(1/16) + 15/16 \times log2(15/16)] = 0.34$
+
+*** =right
+```{r}
+par(mar=c(0,0,0,0)); 
+plot(x,y,xaxt="n",yaxt="n",cex=3,col=c(rep("blue",8),rep("red",8)),pch=19)
+```
+
+Misclassification: $8/16 = 0.5$  
+Gini: $1 - [(8/16)^2 + (8/16)^2] = 0.5$  
+Information:$-[1/16 \times log2(1/16) + 15/16 \times log2(15/16)] = 1$
+
+## Example
+
+```{r}
+rm(list = ls())
+data("iris")
+library(ggplot2)
+names(iris)
+table(iris$Species)
+```
+
+### Create training and test sets
+```{r}
+library(caret)
+inTrain <- createDataPartition(y=iris$Species,
+                              p=0.7, list=FALSE)
+training <- iris[inTrain,]
+testing <- iris[-inTrain,]
+dim(training)
+dim(testing)
+```
+### Iris petal widths/sepal width
+```{r}
+qplot(Petal.Width,Sepal.Width,colour=Species,data=training)
+```
+
+### Iris petal widths/sepal width
+```{r}
+modFit <- train(Species ~ .,method="rpart",data=training)
+print(modFit$finalModel)
+```
+
+### Plot tree
+```{r}
+plot(modFit$finalModel, uniform=TRUE, 
+      main="Classification Tree")
+text(modFit$finalModel, use.n=TRUE, all=TRUE, cex=.8)
+```
+
+### Prettier plots
+```{r}
+library(rattle)
+fancyRpartPlot(modFit$finalModel)
+```
+
+### Predicting new values
+```{r}
+predict(modFit,newdata=testing)
+```
+
+## Notes and further resources
+
+  - Classification trees are non-linear models  
+  - They use interactions between variables  
+  - Data transformations may be less important (monotone transformations)  
+  - Trees can also be used for regression problems (continuous outcome)  
+  - Note that there are multiple tree building options in R both in the caret package - party, rpart and out of the caret package - tree   
+Books
+  - Introduction to statistical learning  
+  - Elements of Statistical Learning  
+  - Classification and regression trees

@@ -1,0 +1,42 @@
+# Regularized Regression
+
+## Basic idea  
+1. Fit a regression model  
+2. Penalize or shrink large coefficients  
+
+Pros:  
+  Can help with the bias/variance tradeoff.   
+  Can help with model selection.  
+  
+Cons:  
+  May be computationally demanding on large data sets.  
+  Does not perform as well as random forests and boosting.  
+  
+## Example
+
+```{r}
+library(ElemStatLearn)
+data("prostate")
+str(prostate)
+```
+
+## Model selection approach: split samples
+
+- No method better when data/computation time permits it
+
+- Approach
+
+  - Divide data into training/test/validation  
+  - Treat validation as test data, train all competing models on the train data and pick the best one on validation.  
+  - To appropriately assess performance on new data apply to test set  
+  - You may re-split and reperform steps 1-3  
+
+- Two common problems
+
+  - Limited data
+  - Computational complexity  
+  
+```{r}
+small = prostate[1:5,]
+lm(lpsa ~., data = small)
+```

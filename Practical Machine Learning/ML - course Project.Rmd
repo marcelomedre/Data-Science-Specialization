@@ -1,0 +1,188 @@
+# ML - course Project
+
+Marcelo M. Nobrega  
+github:     
+RPubs:    
+
+The goal of your project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set. You may use any of the other variables to predict with. You should create a report describing how you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did. You will also use your prediction model to predict 20 different test cases.
+
+```{r, echo = FALSE}
+rm(list = ls())
+```
+
+## Background
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+## Loading data and libraries
+```{r, include=FALSE}
+setwd("C:/Users/Marcelo/Desktop/Data Science/Data-Science-Specialization/Practical Machine Learning/")
+
+# Libraries
+libs <- c("ggplot2", "caret", "rpart", "rpart.plot", "randomForest", "rattle", "RColorBrewer", "e1071")
+lapply(libs, library, character = T)
+
+```
+
+```{r data}
+# Data Sets
+urltr <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+urlte <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+if(!file.exists("./data")){
+  dir.create("./data")
+}
+if(!file.exists("./train.csv")){
+  download.file(urltr, destfile = "train.csv", method = "auto")
+}
+if(!file.exists("./test.csv")){
+  download.file(urlte, destfile = "test.csv", method = "auto")
+}
+train <- read.csv("train.csv", header = T, stringsAsFactors = FALSE, na.strings = c("NA", ""))
+test <- read.csv("test.csv", header = T, stringsAsFactors = FALSE, na.strings = c("NA", ""))
+dim(train);dim(test)
+colSums(is.na(train))
+```
+Train data contains ~ 20k rows and 160 variables.  
+Test data contains 20 rows and 160 variables. 
+Several columns are basically NA values.   
+I will remove columns with more than 70 % of NA an columns with near zero variance.  
+
+## Clean Data
+
+```{r}
+na_count <- function(y) mean(is.na(y)) <= 0.7
+train <- train[sapply(train, na_count)]
+test <-  test[sapply(test, na_count)]
+# Missing values cleaned
+
+NZVtr <- nearZeroVar(train, saveMetrics = TRUE)
+NZVte <- nearZeroVar(test, saveMetrics = TRUE)
+# Removing variables with NZV
+train <- train[,NZVtr$nzv == FALSE]
+test <- test[,NZVtr$nzv == FALSE]
+```
+
+Both Data sets ended up with 59 variables after cleaning them. 
+Now I will split the train data set into two parts, training and testing, and 
+I will remove the first 2 columns, that aren't necessary and will not contribute to the model.  
+
+## Data spliting 
+
+```{r}
+inTrain <- createDataPartition(train$classe, p = 0.7, list = FALSE)
+training <- train[inTrain,-c(1:2)]
+testing <- train[-inTrain, -c(1:2)]
+```
+
+## Modeling - Decision tree
+
+Fitting a Decision tree and predicting in the testing set.  
+
+```{r}
+set.seed(123)
+tree <- rpart(classe ~., data = training, method = "class")
+fancyRpartPlot(tree)
+predtree <- predict(tree, testing, type = "class")
+confusionMatrix(predtree, testing$classe)
+```
+
+As a first model it seems a good model with an accuracy of ~ 0.87. 
+
+## Predicting on Test Set
+```{r}
+predTe <- predict(tree, test, type = "class")
+predTe
+```
+
+## Modeling - Random Forest Model
+
+```{r}
+set.seed(124)
+ctrRF <- trainControl(method = "cv", number = 2)
+modelRF <- train(classe ~., data = training,
+                 method = "rf",
+                 ntree = 100,
+                 trControl = ctrRF)
+modelRF
+plot(modelRF)
+#getTree(modelRF$finalModel, k = 74)
+plot(modelRF$finalModel)
+predRF <- predict(modelRF, testing)
+confusionMatrix(predRF, testing$classe)
+```
+
+Accuracy of 0.99. Great Model, better than a single decision tree as expected.
+
+## Predicting on Test Set
+```{r}
+predRF <- predict(modelRF, test)
+predRF
+```
+
+## GBM Model
+
+For a gradient boosting machine (GBM) model, there are three main tuning parameters:
+  - number of iterations, i.e. trees, (called n.trees in the gbm function)  
+  - complexity of the tree, called interaction.depth  
+  - learning rate: how quickly the algorithm adapts, called shrinkage  
+  - the minimum number of training set samples in a node to commence splitting (n.minobsinnode)  
+
+```{r}
+fitControl <- trainControl(## 10-fold CV
+                           method = "repeatedcv",
+                           number = 3,
+                           classProbs = TRUE,
+                           ## repeated ten times
+                           repeats = 3)
+
+#gbmGrid <-  expand.grid(interaction.depth = c(1, 5, 9), 
+#                        n.trees = (1:30)*50, 
+#                        shrinkage = 0.1,
+#                        n.minobsinnode = 20)
+set.seed(825)
+gbmFit1 <- train(classe ~ ., data = training, 
+                 method = "gbm", 
+                 trControl = fitControl,
+                 ## This last option is actually one
+                 ## for gbm() that passes through
+                 verbose = FALSE)
+                 #tuneGrid = gbmGrid,
+                 ## Specify which metric to optimize
+                 #metric = "ROC"
+gbmFit1
+
+# plot(gbmFit1)
+
+# plot(gbmFit1, metric = "Kappa", plotType = "level",
+#     scales = list(x = list(rot = 90)))
+ggplot(gbmFit1) 
+
+
+# Choosing the Final Model
+whichTwoPct <- tolerance(gbmFit1$results, metric = "Accuracy", 
+                         tol = 2, maximize = TRUE)  
+cat("best model within 2 pct of best:\n")
+gbmFit1$results[whichTwoPct,1:6]
+```
+The tolerance function could be used to find a less complex model based on the percent difference.  
+The package assumes that increasing the number of iterations adds complexity at a faster rate than increasing the tree depth, so models are ordered on the number of iterations then ordered with depth.  
+
+## Test the Model
+```{r}
+gbmPred <- predict(gbmFit1, testing)
+confusionMatrix(gbmPred, testing$classe)
+```
+
+## Predict Results on the test set
+```{r}
+gbmTe <- predict(gbmFit1, test)
+gbmTe
+
+# Writing file
+submit_gbm <- data.frame(X = test$X, y = gbmTe)
+write.csv(submit_gbm, file = "submit.csv", row.names = FALSE)
+```
+
+
+
+

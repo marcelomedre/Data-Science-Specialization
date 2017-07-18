@@ -1,0 +1,41 @@
+# Boosting
+
+## Basic Idea
+
+  - take lots of (possibly) weak predictors  
+  - Weight them and add them up  
+  - Get stronger predictor  
+
+
+## Boosting in R
+  - Boosting can be used with any subset of classifiers  
+  - One Large subclass is gradient boosting  
+  - R boosting libraries  
+    - gbm - boosting with trees  
+    - mboost - model based boosting  
+    - ada - statistical boosting based on additive log regression  
+    - gamBoost - boosting generalized additive models
+
+## Wage Example
+```{r}
+rm(list = ls())
+library(ISLR)
+data(Wage)
+library(ggplot2)
+library(caret)
+Wage <- subset(Wage, select = -c(logwage))
+inTrain <- createDataPartition(y = Wage$wage, p = 0.7, list = FALSE)
+training <- Wage[inTrain, ]
+testing <- Wage[-inTrain, ]
+```
+
+## Fit the Model
+```{r}
+modFit <- train(wage ~., method = "gbm", data = training, verbose = FALSE)
+print(modFit)
+```
+
+## Plot the Results
+```{r}
+qplot(predict(modFit, testing), wage, data = testing)
+```

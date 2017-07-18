@@ -1,0 +1,82 @@
+# Forecasting
+
+## What is different?
+
+  - Data are dependent over time  
+  - Specific pattern types  
+    - Trends - long term increase or decrease  
+    - Seasonal patterns - patterns related to time of week, month, year, etc.  
+    - Cycles - patterns that rise and fall periodically  
+  - Subsampling into training/test is more complicated  
+  - Similar issues arise in spatial data  
+    - Dependency between nearby observations    
+    - Location specific effects   
+  - Typically goal is to predict one or more observations into the future.  
+  - All standard predictions can be used (with caution!)  
+
+## Example Google Data
+```{r}
+library(quantmod)
+from.dat <- as.Date("01/01/08", format = "%m/%d/%y")
+to.dat <- as.Date("12/31/13", format = "%m/%d/%y")
+getSymbols("GOOG", src = "google", from = from.dat, to = to.dat)
+head(GOOG)
+```
+
+##Summarize monthly and store as time series
+
+```{r}
+mGoog <- to.monthly(GOOG)
+googOpen <- Op(mGoog)
+ts1 <- ts(googOpen,frequency=12)
+plot(ts1,xlab="Years+1", ylab="GOOG")
+```
+
+## Example time series decomposition
+
+Trend - Consistently increasing pattern over time  
+Seasonal - When there is a pattern over a fixed period of time that recurs.  
+Cyclic - When data rises and falls over non fixed periods  
+https://www.otexts.org/fpp/6/1  
+
+## Decompose a time series into parts
+```{r}
+plot(decompose(ts1),xlab="Years+1")
+```
+
+## Training and test sets
+```{r}
+ts1Train <- window(ts1,start=1,end=5)
+ts1Test <- window(ts1,start=5,end=(7-0.01))
+ts1Train
+```
+
+## Simple moving average
+
+$$ Y_{t}=\frac{1}{2*k+1}\sum_{j=-k}^k {y_{t+j}}$$
+```{r}
+plot(ts1Train)
+lines(ma(ts1Train,order=3),col="red")
+```
+
+## Exponential smoothing
+```{r}
+ets1 <- ets(ts1Train,model="MMM")
+fcast <- forecast(ets1)
+plot(fcast); lines(ts1Test,col="red")
+```
+
+## Get the accuracy
+```{r}
+accuracy(fcast,ts1Test)
+```
+
+## Notes and further resources
+
+Forecasting and timeseries prediction is an entire field  
+Rob Hyndman's Forecasting: principles and practice is a good place to start  
+Cautions  
+  - Be wary of spurious correlations  
+  - Be careful how far you predict (extrapolation)  
+  - Be wary of dependencies over time  
+See quantmod or quandl packages for finance-related problems.
