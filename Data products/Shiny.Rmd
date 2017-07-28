@@ -1,0 +1,15 @@
+```{r}
+rm(list = ls())
+setwd( "C:/Users/Marcelo/Desktop/Data Science/Data-Science-Specialization/Data products/")
+library(shiny)
+```
+
+# Shiny
+
+Directory contaning at least 2 files.
+ui.R
+
+```{r}
+library(shiny)
+shinyUI(fluidPage())
+```
