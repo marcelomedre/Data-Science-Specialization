@@ -1,0 +1,55 @@
+---
+title: "Developing Data Products Course Project: Shiny Application and Product Pitch"
+author: Marcelo M Nobrega
+date: "August 9th, 2017"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Overview
+
+This presentation was built as a part of the deliverable for the Final Course Project, as a part of the Coursera Data Science Specilization.
+
+The App developed is available at: <https://marcelomedre87.shinyapps.io/Shiny_Application/>.
+
+Source code for ui.R and server.R files are avilable on the GitHub repo: <https://github.com/marcelomedre/Data-Science-Specialization/tree/master/Data%20products>.
+
+## App Functionality
+
+The App compares the expenditure of a car using gasoline and ethanol given the price of each fuel and the distance of the trip.
+
+The result is a table ordered by the more economic cars. 
+
+The App was build with the mtcars data set. 
+
+## Data set
+
+Data set used was the `mtcars` from the datasets package, which is summarized below:
+
+```{r cars, echo = TRUE}
+summary(cars)
+```
+
+## Ethanol x Gasoline x Displacement
+        - Blue dots = Gasoline Expenditures
+        - Red dots = Ethanol Expenditures costing 70% of the gasoline.
+        - Salmon dots = Ethanol Expenditures costing 60% of the gasoline.
+
+```{r cars2, echo = FALSE, fig.width=6, fig.height=4}
+dist <- seq(0,100,10)
+costg <- dist/10*3.65
+costet7 <- dist/7*2.55
+costet6 <- dist/7*2.19
+library(ggplot2)
+ggplot()+
+        geom_line(aes(x = dist, y = costg), colour = "blue")+
+        geom_line(aes(x = dist, y = costet7), colour = "red")+
+        geom_line(aes(x = dist, y = costet6), colour = "salmon")+
+        xlab("Distance")+
+        ylab("Cost")+
+        ggtitle("Comparison of a 0 - 100 km trip using Gasoline and Ethanol")
+```
+
